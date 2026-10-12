@@ -2,7 +2,7 @@
 
 A real Azure OpenAI **planner → validated LangChain tool → Azure DocumentDB vector search → planner → synthesizer** demo. It does not substitute deterministic answers when a model, tool or database fails.
 
-**Status:** offline regression gates pass; this revision's managed native/Entra and real model end-to-end gates remain **unverified** until recorded in [TESTED.md](TESTED.md). Model availability depends on region, subscription eligibility, deployment and quota. Offline mocks are not evidence of live service readiness or recommendation quality.
+**Status:** the repaired native/API-key and Entra/Entra end-to-end gates passed with real Azure models and DocumentDB; see [TESTED.md](TESTED.md) for exact tested revisions, versions and limits. Model availability still depends on region, subscription eligibility, deployment and quota. Neither mocks nor a successful small live run certify general recommendation quality.
 
 ## Requirements
 

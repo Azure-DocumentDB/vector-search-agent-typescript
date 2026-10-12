@@ -11,20 +11,19 @@
 - Data tests use a collection double. They prove command construction, preflight ownership checks and idempotent control flow, not managed-DB compatibility.
 - Audit is point-in-time registry evidence, not a guarantee against all vulnerabilities.
 
-## Live acceptance — UNVERIFIED for this revision
+## Genuine managed end-to-end validation — 2026-10-12
 
-Do not mark this sample's full live gate passed based on offline fixtures, an older revision, or standalone model probes.
+Passed on an isolated Azure DocumentDB M30 in West US2 (one shard,128GiB, MongoDB8.0 compatibility, no HA) and an Azure OpenAI account in East US2. Both resources were restricted to the test client IP. Three synthetic hotels only; no customer data. TLS certificates/hostnames remained verified.
 
-Required independent gate rows:
+Models: `text-embedding-3-small`, version1,1536dimensions; planner and synthesizer `gpt-4.1-mini`, version2025-04-14. Independently configured deployments used API2024-10-21. Both native database/API-key model authentication and Entra database/Entra model authentication passed. These were genuine model requests and real database writes/queries—not a mock or precomputed fallback.
 
-| Gate | Status |
-|---|---|
-| Managed native DB + Azure OpenAI API key; seed/rerun/planner/tool/DB/synthesis/cleanup | UNVERIFIED |
-| Managed Entra DB + Azure OpenAI Entra; same full sequence | UNVERIFIED |
-| Exact generated scope empty afterward; foreign data safety | Offline safety tests only; live UNVERIFIED |
-| Semantic recommendation quality | Not evaluated |
+Tested implementation: `ea8c68ed21129a57c5d4013937c09f35cb96d13b`. **Both complete auth-mode gates passed**, each with seven real model HTTP requests and one validated tool call: three seed embeddings, planner request, query embedding, planner completion and synthesis. Repeat seed inserted0/unchanged3 and made no additional model requests. Returned hotel IDs/names and finite scores were inspected; each answer referenced actual retrieved hotel names. Scoped cleanup deleted3owned rows and a second cleanup deleted0. The direct Azure service DNS endpoint was resolved from the managed SRV record and independently verified on port10260 with TLS1.3. This direct-connection mode does not promise SRV failover.
 
-Earlier WestUS2 S0 eligibility was a deployment blocker. Parent later reports successful EastUS2 standalone real embedding/chat requests in both modes; that does not certify this repository's complete agent path. The parent release reviewer owns eligible resources, private credentials, full live execution and publication decision. No Azure operations or paid model calls were made by this repair worker.
+Actual `auth` commands passed native/API-key and Entra/Entra without paid inference. Wrong password, disabled write consent, disabled model consent and unsafe database scope failed nonzero. Cleanup refused a real foreign sentinel and preserved it unchanged. All owned test collections were independently verified empty after live gates.
+
+The generated recommendations were based on the supplied three-hotel evidence and named retrieved hotels. Some prose inferred likely quietness from urban/lakeside descriptions; this is not evidence of verified hotel facts or a general factuality/grounding guarantee. Users must review generated prose. Offline tests exercise invalid tools, empty/failed retrieval and malformed output; they do not establish universal prompt-injection resistance.
+
+The earlier WestUS2 OpenAI provisioning error was regional; the supported EastUS2 resource and both real authentication modes succeeded. No claim of universal subscription ineligibility is retained.
 
 ## Scope limitations
 
@@ -36,4 +35,4 @@ Managed Mongo port10260 is now a constraint, not merely a default. Matching URI/
 
 ## Managed-search response correction — 2026-10-12
 
-Parent live native auth passed; the initial real agent run failed ownership validation because managed Azure adds an object named `__cosmos_meta__` to `$search`/`returnStoredSource` results. Parent verified original stored fields unchanged and cleaned all3owned records. This revision strips only that known object from aggregate-result validation, not from stored reads. Persisted metadata, other extra fields, modified hotel/owner/vector/hash and malformed search metadata remain errors; inspect/seed/cleanup validation is unchanged. Eight new regressions bring the suite to114pass,0fail/skip; build/lint and full npm audit pass with0vulnerabilities. Full live gate must be rerun by the parent on this revision.
+Parent live native auth passed; the initial real agent run failed ownership validation because managed Azure adds an object named `__cosmos_meta__` to `$search`/`returnStoredSource` results. Parent verified original stored fields unchanged and cleaned all3owned records. This revision strips only that known object from aggregate-result validation, not from stored reads. Persisted metadata, other extra fields, modified hotel/owner/vector/hash and malformed search metadata remain errors; inspect/seed/cleanup validation is unchanged. Eight new regressions bring the suite to114pass,0fail/skip; build/lint and full npm audit pass with0vulnerabilities. Both full live gates were rerun successfully after this fix, as recorded above.
