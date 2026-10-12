@@ -5,7 +5,7 @@
 - Trusted base: `905ba47efda071f3fce7cd1540fb076356818a55` from owner repository `Azure-DocumentDB/vector-search-agent-typescript`.
 - Runtime: Node24.21.0, npm11.19.0, TypeScript7.0.2; real `tsc` compilation.
 - Exact dependencies: Azure Identity4.13.3, LangChain Core1.2.17/OpenAI1.6.2, MongoDB7.7.0, Zod4.6.7, Node types24.19.2; lockfile committed.
-- `npm ci --ignore-scripts`, `npm run build`, `npm run lint`, `npm test`, `npm audit --audit-level=low`: **PASS** in a lockfile-clean install. Tests: **106 passed, 0 failed, 0 skipped**. Full npm audit: **0 vulnerabilities**.
+- `npm ci --ignore-scripts`, `npm run build`, `npm run lint`, `npm test`, `npm audit --audit-level=low`: **PASS** in a lockfile-clean install. Tests: **114 passed, 0 failed, 0 skipped**. Full npm audit: **0 vulnerabilities**.
 - Request-contract tests use a real loopback HTTP fixture with the actual LangChain Azure OpenAI SDK. Synthetic key/JWT only; no model billing or Azure connection.
 - Planner tests exercise real SDK tool binding, multiple tool calls, full ToolMessage sequencing/artifacts and synthesis; the HTTP model outputs and DB results are deterministic fixtures, not recommendation-quality evidence.
 - Data tests use a collection double. They prove command construction, preflight ownership checks and idempotent control flow, not managed-DB compatibility.
@@ -33,3 +33,7 @@ Fixed COS/IVF, maximum50hotels, single disposable collection, direct managed end
 ## Independent-review correction — 2026-10-12
 
 Managed Mongo port10260 is now a constraint, not merely a default. Matching URI/config ports443and27017 are rejected in native and Entra modes before client construction or token acquisition, including direct constructor calls. The live gate additionally asserts nonempty per-tool search hits, consistent tool count, bounded model request count and an answer naming at least one retrieved hotel. This is intentionally not a factuality guarantee; parent review of actual answers remains required. Build/lint/tests and full npm audit repeated:106pass,0fail/skip;0vulnerabilities. Live env/JSON contract unchanged.
+
+## Managed-search response correction — 2026-10-12
+
+Parent live native auth passed; the initial real agent run failed ownership validation because managed Azure adds an object named `__cosmos_meta__` to `$search`/`returnStoredSource` results. Parent verified original stored fields unchanged and cleaned all3owned records. This revision strips only that known object from aggregate-result validation, not from stored reads. Persisted metadata, other extra fields, modified hotel/owner/vector/hash and malformed search metadata remain errors; inspect/seed/cleanup validation is unchanged. Eight new regressions bring the suite to114pass,0fail/skip; build/lint and full npm audit pass with0vulnerabilities. Full live gate must be rerun by the parent on this revision.

@@ -49,14 +49,21 @@ export class HotelStore {
     check(Number.isInteger(nearestNeighbors) && nearestNeighbors >= 1 && nearestNeighbors <= 10, 'invalid_neighbors');
     vector(embedding, this.config.dimensions);
     check((await this.inspect()).length > 0, 'empty_owned_collection');
-    const rows = await this.collection.aggregate<{ document: OwnedHotel; score: number }>([
+    const rows = await this.collection.aggregate<{ document: OwnedHotel & { __cosmos_meta__?: unknown }; score: number }>([
       { $search: { cosmosSearch: { vector: embedding, path: 'vector', k: nearestNeighbors }, returnStoredSource: true } },
       { $project: { _id: 0, document: '$$ROOT', score: { $meta: 'searchScore' } } }
     ], { signal: this.signal, maxTimeMS: Math.min(this.config.timeout, 20000) }).toArray();
     check(rows.length > 0 && rows.length <= nearestNeighbors, 'empty_or_excess_search_results');
     const seen = new Set<string>();
     return rows.map(row => {
-      const doc = validateOwned(row.document, this.config);
+      // Managed Azure $search adds this transport-only object to returnStoredSource.
+      // Strip ONLY that known search decoration; stored reads remain strictly checked
+      // by inspect(), and all other extra/changed fields still fail validateOwned().
+      check(row.document && typeof row.document === 'object', 'invalid_search_document');
+      const { __cosmos_meta__: metadata, ...storedDocument } = row.document;
+      check(metadata === undefined || (metadata !== null && typeof metadata === 'object' && !Array.isArray(metadata)),
+        'invalid_search_metadata');
+      const doc = validateOwned(storedDocument, this.config);
       check(Number.isFinite(row.score) && !seen.has(doc._id), 'invalid_search_result'); seen.add(doc._id);
       return { hotel: doc.hotel, score: row.score };
     });

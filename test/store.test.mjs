@@ -78,3 +78,29 @@ test('input parser rejects duplicates, empty descriptions and too many records',
   assert.throws(() => parseHotels(Array.from({ length: 51 }, (_, i) => ({ ...hotel, HotelId: String(i) }))));
   assert.throws(() => validateOwned({ ...owned(hotel, [1, 0, 0], config()), vector: [0, 0, 0] }, config()));
 });
+test('managed search wire decoration __cosmos_meta__ is ignored only on aggregate result', async () => {
+  const row = owned(hotel, [1, 0, 0], config()); const m = mockStore([row]);
+  const decorated = { ...structuredClone(row), __cosmos_meta__: { searchScore: .9, synthetic: 'wire metadata' } };
+  m.collection.aggregate = () => ({ toArray: async () => [{ document: decorated, score: .9 }] });
+  assert.deepEqual(await m.store.search([1, 0, 0], 3), [{ hotel, score: .9 }]);
+  assert.deepEqual(m.rows, [row]); assert.ok('__cosmos_meta__' in decorated);
+  assert.deepEqual(await m.store.seed([hotel], m.embeddings), { inserted: 0, unchanged: 1 });
+  assert.equal(m.embeds(), 0); assert.deepEqual(await m.store.cleanup(), { deleted: 1 });
+});
+test('persisted __cosmos_meta__ remains foreign data for inspect, seed, search and cleanup', async () => {
+  const m = mockStore([{ ...owned(hotel, [1, 0, 0], config()), __cosmos_meta__: {} }]);
+  await assert.rejects(m.store.inspect(), /foreign_or_modified_data/);
+  await assert.rejects(m.store.seed([hotel], m.embeddings), /foreign_or_modified_data/);
+  await assert.rejects(m.store.search([1, 0, 0], 3), /foreign_or_modified_data/);
+  await assert.rejects(m.store.cleanup(), /foreign_or_modified_data/);
+  assert.equal(m.calls.updates.length, 0); assert.equal(m.calls.deletes.length, 0);
+  assert.equal(m.calls.aggregates.length, 0); assert.equal(m.embeds(), 0);
+});
+for (const change of [{ unexpected: 'foreign' }, { hotel: { ...hotel, Description: 'changed' } },
+  { owner: 'foreign-owner' }, { vector: [0, 1, 0] }, { __cosmos_meta__: 'not-an-object' }, { __cosmos_meta__: [] }])
+  test('search metadata exemption cannot hide other unknown or modified fields', async () => {
+    const row = owned(hotel, [1, 0, 0], config()); const m = mockStore([row]);
+    m.collection.aggregate = () => ({ toArray: async () => [{ document: { ...row, __cosmos_meta__: {}, ...change }, score: .9 }] });
+    await assert.rejects(m.store.search([1, 0, 0], 3));
+    assert.deepEqual(m.rows, [row]); assert.equal(m.calls.deletes.length, 0);
+  });
