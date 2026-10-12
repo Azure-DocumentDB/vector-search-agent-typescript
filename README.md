@@ -25,7 +25,7 @@ Edit `.env`; it is ignored by Git. Never commit keys, tokens, connection strings
 
 Use a fresh name such as `agent_disposable_20261012_a1b2c3d4` and explicit `MONGO_COLLECTION=hotels`. Database names must start `agent_disposable_` and have an8–45character lowercase/digit/underscore suffix; collection names are strict lowercase identifiers.
 
-`MONGO_AUTH_MODE=native` requires a percent-encoded `mongodb://user:password@EXACT_HOST:PORT/` connection string. `MONGO_HOST` must be the exact managed `*.mongocluster.cosmos.azure.com` endpoint; port defaults to10260. **Get the supported direct host/port from your service; this sample does not discover it.** Entra uses `MONGO_AUTH_MODE=entra`, the same explicit host/port and optional `MONGO_OIDC_USERNAME`; unset the native URI.
+`MONGO_AUTH_MODE=native` requires a percent-encoded `mongodb://user:password@EXACT_HOST:PORT/` connection string. `MONGO_HOST` must be the exact managed `*.mongocluster.cosmos.azure.com` endpoint; port must be10260 (omission selects10260; every other value is rejected). **Get the supported direct hostname from your service; this sample does not discover it.** Entra uses `MONGO_AUTH_MODE=entra`, the same explicit host/port and optional `MONGO_OIDC_USERNAME`; unset the native URI.
 
 This demo deliberately uses **direct connections**, mandatory certificate/hostname-verified TLS, no SRV discovery/topology redirects, no arbitrary URI options, no loopback bypass, and an exact OIDC allowed host. It prioritizes credential destination constraints over topology discovery/failover; it is **not a production high-availability client**. Other clouds/endpoints require reviewed code changes, not a disable-validation flag. Native and model auth modes are independent; mixed credentials in one service's mode fail closed.
 
@@ -63,7 +63,7 @@ npm run auth
 npm run test:live
 ```
 
-The live gate requires an empty collection; seeds3synthetic hotels with real embeddings, repeats seed and checks zero additional embeddings/inserts, creates IVF, runs the real planner/tool/DB/synthesis path, cleans exact owned rows in `finally`, and proves repeated cleanup deletes0. Nonzero failure is never a pass. Cleanup uses the run deadline: cancellation can leave owned rows requiring `npm run cleanup` under fresh explicit consent. A successful model-only HTTP probe is **not** this gate. Record mode, revision, API/deployment versions, command, exits, model requests, tool evidence and cleanup; omit credentials and identifying endpoint details.
+The live gate requires an empty collection; seeds3synthetic hotels with real embeddings, repeats seed and checks zero additional embeddings/inserts, creates IVF, runs the real planner/tool/DB/synthesis path, asserts nonempty tool search hits and bounded model requests, requires the answer to name at least one retrieved hotel, cleans exact owned rows in `finally`, and proves repeated cleanup deletes0. Nonzero failure is never a pass. Cleanup uses the run deadline: cancellation can leave owned rows requiring `npm run cleanup` under fresh explicit consent. The hotel-name reference check is not factuality certification; the parent must independently inspect the answer against returned evidence. A successful model-only HTTP probe is **not** this gate. Record mode, revision, API/deployment versions, command, exits, model requests, tool evidence and cleanup; omit credentials and identifying endpoint details.
 
 ## Tests and design
 

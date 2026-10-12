@@ -27,6 +27,7 @@ export function loadDB(env: NodeJS.ProcessEnv = process.env): DBConfig {
   const host = env.MONGO_HOST ?? '';
   check(managedHost.test(host), 'invalid_managed_mongo_host');
   const port = integer(env.MONGO_PORT, 10260, 65535);
+  check(port === 10260, 'managed_mongo_port_must_be_10260');
   const database = env.MONGO_DATABASE ?? '';
   check(/^agent_disposable_[a-z0-9_]{8,45}$/.test(database) && database.length <= 63, 'explicit_disposable_database_required');
   const collection = env.MONGO_COLLECTION ?? '';

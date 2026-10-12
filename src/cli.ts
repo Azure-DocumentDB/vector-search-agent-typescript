@@ -5,6 +5,7 @@ import { makeModels, ModelBudget } from './models.js';
 import { HotelStore } from './store.js';
 import { readHotels, parseHotels } from './data.js';
 import { runAgent, searchSchema } from './agent.js';
+import { assertLiveEvidence } from './live-evidence.js';
 export async function main(command: string, env: NodeJS.ProcessEnv = process.env): Promise<void> {
   check(['auth', 'upload', 'agent', 'cleanup', 'live'].includes(command), 'unknown_command');
   validateRuntimeEnvironment(env);
@@ -51,6 +52,7 @@ export async function main(command: string, env: NodeJS.ProcessEnv = process.env
       check(first.inserted === 3 && second.inserted === 0 && second.unchanged === 3 && budget.requests === callsBeforeRepeat, 'live_idempotence_failure');
     }
     const result = await runAgent(models, store, query, neighbors, signal);
+    if (command === 'live') assertLiveEvidence(result, budget.requests, modelConfig!.maxRequests, neighbors);
     console.log(JSON.stringify({ command, databaseMode: dbConfig.mode, modelMode: modelConfig!.mode, target: dbConfig.target,
       modelRequests: budget.requests, inputChars: budget.inputChars, ...result }));
   } finally {

@@ -132,3 +132,15 @@ test('direct constructors reject forged endpoint config before token acquisition
   const m = { ...modelsConfig(), endpoint: 'https://evil.test', mode: 'entra', key: '' };
   assert.throws(() => makeModels(m, new ModelBudget(m, signal()), { credential: cred })); assert.equal(calls, 0);
 });
+for (const mode of ['native', 'entra']) for (const port of [443, 27017])
+  test(`${mode} rejects matching but disallowed port ${port} before client or credential acquisition`, () => {
+    let tokenCalls = 0;
+    const credential = { getToken: async () => { tokenCalls++; throw Error('must not acquire'); } };
+    const uri = dbEnv().MONGO_CONNECTION_STRING.replace(':10260/', `:${port}/`);
+    assert.throws(() => loadDB(dbEnv({ MONGO_AUTH_MODE: mode, MONGO_PORT: String(port),
+      MONGO_CONNECTION_STRING: mode === 'native' ? uri : undefined })), /managed_mongo_port_must_be_10260/);
+    const valid = loadDB(dbEnv(mode === 'entra' ? { MONGO_AUTH_MODE: mode, MONGO_CONNECTION_STRING: undefined } : {}));
+    assert.throws(() => makeMongo({ ...valid, port, uri: mode === 'native' ? uri : '' }, signal(), credential),
+      /managed_mongo_port_must_be_10260/);
+    assert.equal(tokenCalls, 0);
+  });
