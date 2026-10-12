@@ -2,25 +2,30 @@
   "name": "vector-search-agent-typescript",
   "version": "1.0.0",
   "description": "AI agent with vector search on Azure DocumentDB (TypeScript)",
-  "main": "index.js",
+  "main": "dist/agent.js",
   "type": "module",
   "scripts": {
-    "build": "tsc",
-    "auth": "npm run build && node --env-file .env dist/scripts/test-auth.js",
-    "upload": "npm run build && node --env-file .env dist/upload-documents.js",
-    "start": "npm run build && node --env-file .env dist/agent.js",
-    "cleanup": "npm run build && node --env-file .env dist/cleanup.js"
+    "build": "tsc -p tsconfig.json",
+    "lint": "tsc --noEmit -p tsconfig.json",
+    "test": "npm run build && node --test test/*.test.mjs",
+    "auth": "npm run build && node --env-file-if-exists=.env dist/cli.js auth",
+    "upload": "npm run build && node --env-file-if-exists=.env dist/cli.js upload",
+    "start": "npm run build && node --env-file-if-exists=.env dist/cli.js agent",
+    "cleanup": "npm run build && node --env-file-if-exists=.env dist/cli.js cleanup",
+    "test:live": "npm run build && node --env-file-if-exists=.env dist/cli.js live"
   },
   "devDependencies": {
-    "@types/node": "^24.10.1",
-    "typescript": "^5.9.3"
+    "@types/node": "24.19.2",
+    "typescript": "7.0.2"
   },
   "dependencies": {
-    "@langchain/azure-cosmosdb": "^1.2.0",
-    "@langchain/core": "^1.0.6",
-    "@langchain/openai": "^1.1.2",
-    "langchain": "^1.0.6",
-    "mongodb": "^7.1.0",
-    "zod": "^4.1.12"
+    "@azure/identity": "4.13.3",
+    "@langchain/core": "1.2.17",
+    "@langchain/openai": "1.6.2",
+    "mongodb": "7.7.0",
+    "zod": "4.6.7"
+  },
+  "engines": {
+    "node": ">=24.21.0 <25"
   }
 }
